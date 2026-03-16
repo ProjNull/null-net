@@ -10,9 +10,15 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@iconify-json/material-symbols": "^1.2.62",
+    "dompurify": "^3.3.3",
     "graphology": "^0.26.0",
     "graphology-layout-force": "^0.2.4",
+    "isomorphic-dompurify": "^3.3.0",
+    "marked": "^17.0.4",
     "sigma": "^3.0.2",
+    "vanjs-core": "^1.6.0",
+    "vanjs-ui": "^0.11.14",
     "vis-network": "^10.0.2"
   }
 }

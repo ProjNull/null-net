@@ -1,4 +1,10 @@
-const toURL = (url:string) => new URL((url.startsWith("http") ? "" : "https://") + url + (url.endsWith("/") ? "site.json" : "/site.json"));
+import DOMPurify from 'isomorphic-dompurify';
+import { marked } from 'marked';
+
+const toURL = (url:string,file:string = "site.json") => new URL("https://" + url + `/${file}`);
+const validReadmePattern = /^[a-zA-Z-_]+\.md$/;
+const validDomainPattern = /^[a-z-\.]+\.[a-z]+$/;
+
 async function fetchSite(url: string): Promise<Site | false> {
     const finalURL = toURL(url);
     console.log("Fetching: ", finalURL.hostname)
@@ -12,21 +18,30 @@ async function fetchSite(url: string): Promise<Site | false> {
 
         var refs:string[] = []
 
-
-
         data.refs?.forEach(r => {
             try {
-                refs.push(toURL(r).hostname)
+                if (validDomainPattern.test(r)) {
+                    refs.push(r)
+                }
             } catch (e) {
                 return
             }
         })
 
+        var readmefile:string | undefined = undefined
+        if (data.readme && validReadmePattern.test(data.readme)) {
+            const readmeRes = await fetch(toURL(url,data.readme));
+            const readmeText = await readmeRes.text()
+            if(readmeText.trim().length <= 100) {
+                readmefile = DOMPurify.sanitize(await marked.parse(readmeText.trim()));
+            }
+        }
+
         return {
             url: finalURL.hostname,
             name: data.name,
             description: data.description,
-            detailedDescription: data.detailedDescription ?? "",
+            readme: readmefile,
             refs: refs,
             categories: data.categories ?? []
         }
@@ -40,18 +55,21 @@ async function fetchSite(url: string): Promise<Site | false> {
 
 export async function getAllSites(startUrl: string): Promise<Site[]> {
     const sites: Site[] = [];
+    const visited: string[] = [];
     const tovisit: (Site | false)[] = [];
-
+    if (!validDomainPattern.test(startUrl)) return [];
     tovisit.push(await fetchSite(startUrl))
     while (tovisit.length > 0) {
         var site = tovisit.shift() ?? false
         if (site !== false) {
-            if (site)
-                sites.push(site)
-            var newSites = site.refs.filter(r => sites.findIndex(s => s.url == r) == -1);
+            sites.push(site)
+            var newSites = site.refs.filter(r => !visited.includes(r));
             for (let i = 0; i < newSites.length; i++) {
                 const url = newSites[i]!;
-                tovisit.push(await fetchSite(url))
+                if (validDomainPattern.test(url)) {
+                    visited.push(url)
+                    tovisit.push(await fetchSite(url))
+                };
             }
         }
     }

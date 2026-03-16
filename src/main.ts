@@ -3,98 +3,64 @@
  * examples, or reproducible test cases for new issues, for instance.
  */
 import "./style.css"
-import Graph from "graphology";
-import Sigma from "sigma";
-import ForceSupervisor from "graphology-layout-force/worker";
+import "./readme.css"
 import SiteRefs from "./refs.json"
 
-import { Network, type Edge, type Node } from "vis-network";
+import van, { type State } from "vanjs-core";
+import { GraphIcon, ListIcon } from "./utils/icons";
+import type SiteGraph from "./utils/graph";
+import GraphView from "./views/graphView";
+import ListView from "./views/listView";
+import { showSitePage } from "./utils/sitePage";
 
 const sites: Refs = SiteRefs
 
+const { p, pre, code, div, a,button } = van.tags
 
-function calcRefs(url: string) {
-    return Object.values(sites).filter(r => r.includes(url)).length
+
+
+function App() {
+    // State to toggle views
+    const showGraph = van.state(true);
+
+    // State to hold the GraphView instance
+    const graphInstance = van.state<SiteGraph | null>(null);
+
+    const toggleView = () => {
+        if (showGraph.val) {
+            // We are switching FROM graph TO list
+            // 1. Cleanup first
+            if (graphInstance.val) {
+                graphInstance.val.kill();
+                graphInstance.val = null;
+            }
+            // 2. Then switch state
+            showGraph.val = false;
+        } else {
+            // We are switching TO graph
+            showGraph.val = true;
+            // Note: The GraphView will be instantiated in the render function below
+        }
+    };
+
+    const openPage = (id:string) =>  {
+        if (graphInstance.val!== null) {
+            graphInstance.val.focus(id);
+        }
+        showSitePage(id,(s) => openPage(s))
+    }
+
+    return div({classList: "view"},
+        button({classList: "btn toggle-button", onclick: toggleView }, () => showGraph.val ?  ListIcon() : GraphIcon()),
+
+        () => showGraph.val
+            ? GraphView(graphInstance,sites,(s) => openPage(s))
+            : ListView(sites,(s) => openPage(s))
+        
+    );
 }
 
-const edges: Edge[] = []
-
-const nodes: Node[] = Object.keys(sites).map(r => {
-    var size = 5 + calcRefs(r) * 4;
-    var color = undefined;
-    if (r == "projnull.eu") {
-        size += 20;
-        color = "#009200";
-    }
-    return { id: r, label: r, size, color }
-})
+van.add(document.body, App());
 
 
-Object.entries(sites).forEach(([site, refs]) => {
-    refs.forEach(ref => {
-        edges.push({
-            from: site,
-            to: ref,
-            arrows: {
-                to: true
-            }
-        })
-    })
-})
-
-const network = new Network(document.getElementById("graph") as HTMLDivElement, {
-    nodes,
-    edges
-}, {
-
-    physics: {
-        enabled: true,
-        solver: 'repulsion', // Best for spreading out evenly
-        repulsion: {
-            nodeDistance: 300, // Default is usually 100. Try 200-500.
-            springLength: 200, // Increases distance between connected nodes
-            springConstant: 0.04, // Lower makes springs "looser", allowing more spread
-            damping: 0.09
-        },
-        stabilization: {
-            iterations: 400
-        }
-    },
-    nodes: {
-        shape: "dot",
-        color: {
-            border: "#222222",
-            background: "#666666",
-            hover: {
-                border: "#3a3a3a",
-                background: "#757575",
-            },
-            highlight: {
-                border: "#004500",
-                background: "#006300",
-            },
-        },
-        shadow: true,
-        font: { color: "#eeeeee" },
-    }
-})
-
-
-// Assuming 'network' is your initialized vis.Network instance
-network.on("doubleClick", function (params) {
-    // params contains: pointers (DOM position), nodes (array of selected node IDs), edges (array of selected edge IDs)
-
-    if (params.nodes.length > 0) {
-        // A node was clicked
-        const nodeId = params.nodes[0]; // Get the first selected node ID
-        const nodeData = sites[nodeId] // Retrieve full data object for that node
-
-        network.focus(nodeId, {animation: true, scale: 0.5})
-
-        console.log("Node clicked:", nodeId);
-        console.log("Node data:", nodeData);
-
-        // Your custom logic here (e.g., open a modal, show details)
-        // alert("You clicked node: " + nodeData.label);
-    }
-});
+//new SiteGraph(document.getElementById("graph") as HTMLDivElement,sites);

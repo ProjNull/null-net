@@ -2,7 +2,7 @@ type SiteJSON = {
     name: string,
     categories: string[],
     description: string,
-    detailedDescription: string,
+    readme?: string,
     refs:string[]
 }
 
