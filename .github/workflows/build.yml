@@ -1,6 +1,6 @@
-name: Logseq Publish
+name: Deploy
 on:
-  workflow_dispatch: true
+  workflow_dispatch:
   schedule:
     - cron: '0 0 * * 0'
 
