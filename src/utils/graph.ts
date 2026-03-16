@@ -5,6 +5,7 @@
 
 
 import type { State } from "vanjs-core";
+import AppConfig from "../../config";
 import van from "vanjs-core";
 import { DataSet, Network, type DataSetEdges, type DataSetNodes, type Edge, type Node, type Options } from "vis-network";
 
@@ -61,7 +62,7 @@ export default class SiteGraph {
         Object.keys(sites).forEach(r => {
             var size = 5 + this.calcRefs(r) * 4;
             var color = undefined;
-            if (r == "projnull.eu") {
+            if (r == AppConfig.masterSite) {
                 size += 20;
                 color = "#009200";
             }

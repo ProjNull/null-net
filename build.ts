@@ -3,7 +3,8 @@ import { getAllSites } from "./mapper/main"
 import FS from 'fs/promises'
 import Path from 'path'
 import { watch } from "fs"
-const baseSite = "projnull.eu"
+import AppConfig from "./config";
+const baseSite = AppConfig.masterSite
 const outputDir = "dist/"
 
 const sites = await getAllSites(baseSite)
