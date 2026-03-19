@@ -7,7 +7,8 @@ type SiteJSON = {
 }
 
 type Site = SiteJSON & {
-    url: string
+    url: string,
+    masterSite: string
 }
 
 

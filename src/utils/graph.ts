@@ -71,13 +71,22 @@ export default class SiteGraph {
 
         Object.entries(sites).forEach(([site, refs]) => {
             refs.forEach(ref => {
-                this.edges.push({
-                    from: site,
-                    to: ref,
-                    arrows: {
+                const existingEdge = this.edges.find(e => e.from == ref && e.to == site);
+                if (existingEdge) {
+                    existingEdge.arrows = {
+                        from: true,
                         to: true
                     }
-                })
+                } else {
+                    this.edges.push({
+                        from: site,
+                        to: ref,
+                        arrows: {
+                            to: true
+                        }
+                    })
+                }
+                
             })
         })
 

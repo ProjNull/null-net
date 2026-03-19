@@ -5,7 +5,7 @@ const toURL = (url:string,file:string = "site.json") => new URL("https://" + url
 const validReadmePattern = /^[a-zA-Z-_]+\.md$/;
 const validDomainPattern = /^[a-z-\.]+\.[a-z]+$/;
 
-async function fetchSite(url: string): Promise<Site | false> {
+async function fetchSite(url: string,masterSite:string): Promise<Site | false> {
     const finalURL = toURL(url);
     console.log("Fetching: ", finalURL.hostname)
     try {
@@ -20,7 +20,7 @@ async function fetchSite(url: string): Promise<Site | false> {
 
         data.refs?.forEach(r => {
             try {
-                if (validDomainPattern.test(r)) {
+                if (validDomainPattern.test(r) && !refs.includes(r)) {
                     refs.push(r)
                 }
             } catch (e) {
@@ -39,6 +39,7 @@ async function fetchSite(url: string): Promise<Site | false> {
 
         return {
             url: finalURL.hostname,
+            masterSite: masterSite,
             name: data.name,
             description: data.description,
             readme: readmefile,
@@ -58,7 +59,7 @@ export async function getAllSites(startUrl: string): Promise<Site[]> {
     const visited: string[] = [];
     const tovisit: (Site | false)[] = [];
     if (!validDomainPattern.test(startUrl)) return [];
-    tovisit.push(await fetchSite(startUrl))
+    tovisit.push(await fetchSite(startUrl,startUrl))
     while (tovisit.length > 0) {
         var site = tovisit.shift() ?? false
         if (site !== false) {
@@ -68,7 +69,7 @@ export async function getAllSites(startUrl: string): Promise<Site[]> {
                 const url = newSites[i]!;
                 if (validDomainPattern.test(url)) {
                     visited.push(url)
-                    tovisit.push(await fetchSite(url))
+                    tovisit.push(await fetchSite(url,startUrl))
                 };
             }
         }
